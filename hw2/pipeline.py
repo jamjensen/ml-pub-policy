@@ -13,12 +13,6 @@ def load_data(filename):
 	
 	return df
 
-## Explore data
-
-
-
-## Pre-Process 
-
 def fill_null(df):
 	'''
 	Fills null columns

@@ -29,19 +29,32 @@ def summarize(df, cols):
 		print(df[col].describe())
 
 
-def target_loc_dist(target, loc):
+def target_loc_dist(df, target, loc):
 	'''
 	Percentage of people who have had deliquency
+	Inputs:
+		target (str): name of target column
+		loc (str): name of column with record location
 	'''
 
 	one = df[df[target] == 1].groupby(loc).size()
-	two = df.groupby(target).PersonID.nunique()
+	two = df.groupby(loc).PersonID.nunique()
 
-	one / two
+	return one / two
 
-## Make heatmap
+
+def plot_distribution(col):
+	'''
+	Takes the column of a dataframe and plots distribution of its values
+	'''
+
+	return sns.distplot(col, hist=False, rug=True);
+
 
 def make_heatmap(df):
+	'''
+	Takes a dataframe and makes a heatmap visualizing correlations among variables
+	'''
 
 	corr = df.corr()
 	ax = sns.heatmap(corr, xticklabels=corr.columns.values, 
@@ -49,8 +62,6 @@ def make_heatmap(df):
 
 	return ax
 
-
-## Visualize missing data
 
 def missing_bar(df):
 	'''
