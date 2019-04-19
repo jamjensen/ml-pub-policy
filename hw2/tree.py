@@ -5,6 +5,10 @@ import pandas as pd
 import pipeline
 
 DLQ_COL = 'SeriousDlqin2yrs'
+KEEP_COLS = ['SeriousDlqin2yrs', 'NumberRealEstateLoansOrLines']
+
+filename = 'credit-data.csv'
+
 
 
 class FinanceTree:
@@ -78,6 +82,7 @@ def buildtree(raw_path):
     pd.options.mode.chained_assignment = None
 
     df = pipeline.load_data(raw_path)
+    df = df.loc[:,KEEP_COLS]
     pipeline.fill_null(df)
 
     finance_tree = FinanceTree(df)

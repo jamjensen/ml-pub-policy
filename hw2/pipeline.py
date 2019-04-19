@@ -5,14 +5,11 @@ from sklearn.model_selection import train_test_split
 TEST_SIZE = 0.2
 RANDOM_STATE = 1
 
-KEEP_COLS = ['SeriousDlqin2yrs', 'NumberRealEstateLoansOrLines']
-filename = 'GiveMeSomeCredit/cs-training.csv'
+filename = 'credit-data.csv'
 
 def load_data(filename):
 
 	df = pd.read_csv(filename, index_col=False)
-	df = df.loc[:,KEEP_COLS]
-	# df.drop(columns=['Unnamed: 0'], inplace=True) 
 	
 	return df
 
@@ -32,14 +29,14 @@ def fill_null(df):
 	return None
 
 
-def discretize(df, colname):
+def discretize(df, colname, bin_len):
 	'''
 	Discretizes a continuous variable
 	How should we choose number of bins? 
 	'''
 	lb = df[colname].min()
 	ub = df[colname].max()
-	bins = np.linspace(lb, ub, 10)
+	bins = np.linspace(lb, ub, bin_len)
 
 	df[colname +'_discrete'] = df[colname].apply(lambda x: np.digitize(x, bins))
 
