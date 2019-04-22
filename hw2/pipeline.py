@@ -26,8 +26,8 @@ def fill_null(df):
 def discretize(df, colname, bin_len):
 	'''
 	Discretizes a continuous variable
-	How should we choose number of bins? 
 	'''
+	
 	lb = df[colname].min()
 	ub = df[colname].max()
 	bins = np.linspace(lb, ub, bin_len)
