@@ -2,10 +2,11 @@ import graphviz
 from sklearn import tree
 from sklearn.metrics import accuracy_score
 import pandas as pd
+import numpy as np
 import pipeline
 
-DLQ_COL = 'SeriousDlqin2yrs'
-KEEP_COLS = ['SeriousDlqin2yrs', 'NumberRealEstateLoansOrLines']
+DLQ_COL = ['SeriousDlqin2yrs']
+KEEP_COLS = ['zipcode', 'MonthlyIncome_discrete', 'NumberRealEstateLoansOrLines']
 
 filename = 'credit-data.csv'
 
@@ -53,10 +54,10 @@ class FinanceTree:
             to the diagnosis
         '''
         if param is None:
-            self.y_hat = self.trained_model.predict(self.x_test)
+            self.y_hat = self.trained_model.predict_proba(self.x_test)[:,1]
             return None
         if isinstance(param, pd.DataFrame):
-            return self.trained_model.predict(param)
+            return self.trained_model.predict_proba(param)[:,1]
 
         return None
 
@@ -68,7 +69,12 @@ class FinanceTree:
         Output:
             Returns the trained SymptomTree class object
         '''
-        return accuracy_score(self.y_test, self.y_hat)
+
+        calc_threshold = lambda x,y: 0 if x < y else 1 
+        test_scores = self.y_hat
+        predicted_test = np.array([calc_threshold(score, .4) for score in test_scores])
+        
+        return accuracy_score(predicted_test, self.y_test)
 
 
 def buildtree(raw_path):
@@ -82,17 +88,30 @@ def buildtree(raw_path):
     pd.options.mode.chained_assignment = None
 
     df = pipeline.load_data(raw_path)
-    df = df.loc[:,KEEP_COLS]
     pipeline.fill_null(df)
+    pipeline.discretize(df, pipeline.DISCR_COL, pipeline.BIN_LEN)
 
-    finance_tree = FinanceTree(df)
+    tree_df = format_df(df, KEEP_COLS)
+
+    finance_tree = FinanceTree(tree_df)
 
     x_train, y_train = pipeline.get_x_y_df( \
-        finance_tree.data, [DLQ_COL])
+        finance_tree.data, DLQ_COL)
 
     finance_tree.train(x_train, y_train)
     finance_tree.predict(None)
 
     return finance_tree
+
+
+def format_df(df, keep_cols):
+    '''
+    Transforms feature columns into dummy variables and returns
+        dataframe used to build the decision tree
+    '''
+    df = df.loc[:, keep_cols + DLQ_COL]
+    df2 = df.copy()
+
+    return pipeline.make_binary(df2, keep_cols)
 
 

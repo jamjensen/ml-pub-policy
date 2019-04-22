@@ -4,6 +4,8 @@ from sklearn.model_selection import train_test_split
 
 TEST_SIZE = 0.2
 RANDOM_STATE = 1
+DISCR_COL = 'MonthlyIncome'
+BIN_LEN = 10000
 
 filename = 'credit-data.csv'
 
@@ -19,6 +21,9 @@ def fill_null(df):
 	'''
 	if any(df.isna()): 
 		df.fillna(df.median(), inplace=True)
+
+	df = df[~df.isin([np.nan, np.inf, -np.inf]).any(1)]
+
 
 	return None
 
