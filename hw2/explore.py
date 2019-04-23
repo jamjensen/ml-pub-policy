@@ -8,24 +8,20 @@ import pipeline
 
 
 COL_NAMES = ['NumberOfTimes90DaysLate', 'MonthlyIncome', 'age']
-
 LOC = 'zipcode'
 TARGET = 'SeriousDlqin2yrs'
 
 FILENAME = 'credit-data.csv'
 
 
-
-def go():
-
-	df = pipeline.load_data(FILENAME)
-
-	summarize(df, COL_NAMES)
-
-
-## Distributions of Different Variables
-
 def summarize(df, cols):
+	'''
+	Dispalys the moments and quartile ranges for a given
+	list of varables
+	Inputs:
+		df: dataframe
+		cols: list of columns
+	'''
 
 	for col in cols:
 		print(df[col].describe())
@@ -47,7 +43,7 @@ def target_loc_dist(df, target, loc):
 
 def plot_distribution(col):
 	'''
-	Takes the column of a dataframe and plots distribution of its values
+	Takes the column (str) of a dataframe and plots distribution of its values.
 	'''
 
 	return sns.distplot(col, hist=False, rug=True);

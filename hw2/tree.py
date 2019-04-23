@@ -7,6 +7,7 @@ import pipeline
 
 DLQ_COL = ['SeriousDlqin2yrs']
 KEEP_COLS = ['zipcode', 'MonthlyIncome_discrete', 'NumberRealEstateLoansOrLines']
+THRESHOLD = .4
 
 filename = 'credit-data.csv'
 
@@ -14,7 +15,7 @@ filename = 'credit-data.csv'
 
 class FinanceTree:
     '''
-    Class for representing the symptom/diagnosis decision tree
+    Class for representing the financial distress decision tree
     '''
     def __init__(self, data):
         self.model = tree.DecisionTreeClassifier()
@@ -51,7 +52,7 @@ class FinanceTree:
             with the same cols as x_train and a single row of values
         Output:
             either None, if no param provided, or an int corresponding
-            to the diagnosis
+            to the probability
         '''
         if param is None:
             self.y_hat = self.trained_model.predict_proba(self.x_test)[:,1]
@@ -67,15 +68,26 @@ class FinanceTree:
         '''
         Reports the accuracy of the trained model using testing data
         Output:
-            Returns the trained SymptomTree class object
+            Returns the trained FinanceTree class object
         '''
 
         calc_threshold = lambda x,y: 0 if x < y else 1 
         test_scores = self.y_hat
-        predicted_test = np.array([calc_threshold(score, .4) for score in test_scores])
+        predicted_test = np.array([calc_threshold(score, THRESHOLD) for score in test_scores])
         
         return accuracy_score(predicted_test, self.y_test)
 
+    @property
+    def feature_importance(self):
+
+        d = {'Features': self.x_train.columns, "Importance": self.model.feature_importances_}
+        feature_importance = pd.DataFrame(data=d)
+        feature_importance = feature_importance.sort_values(by=['Importance'], ascending=False)
+        
+        return feature_importance
+
+    
+    
 
 def buildtree(raw_path):
     '''

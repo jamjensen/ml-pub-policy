@@ -10,14 +10,24 @@ BIN_LEN = 10000
 filename = 'credit-data.csv'
 
 def load_data(filename):
+	'''
+	The data pipeline
+	Inputs:
+		filename (str): name of csv
+	Outputs:
+		df: a dataframe
+	'''
 
 	df = pd.read_csv(filename, index_col=False)
 	
 	return df
 
+
 def fill_null(df):
 	'''
-	Fills null columns
+	Fills null columns in a dataframe in place
+	Inputs:
+		df: a dataframe
 	'''
 	if any(df.isna()): 
 		df.fillna(df.median(), inplace=True)
@@ -31,6 +41,10 @@ def fill_null(df):
 def discretize(df, colname, bin_len):
 	'''
 	Discretizes a continuous variable
+	Inputs:
+		df: a dataframe
+		colname (str): name of continuous variable
+		bin_len (int): size of bins 
 	'''
 	
 	lb = df[colname].min()
@@ -63,6 +77,7 @@ def get_x_y_df(df, target_col):
     Output:
         Returns a tuple of dataframes
     '''
+    
     x = df.drop(target_col, axis=1)
     y = df.loc[:, target_col]
 
