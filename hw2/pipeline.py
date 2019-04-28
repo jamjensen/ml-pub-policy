@@ -7,7 +7,7 @@ RANDOM_STATE = 1
 DISCR_COL = 'MonthlyIncome'
 BIN_LEN = 10000
 
-filename = 'credit-data.csv'
+filename = 'data/credit-data.csv'
 
 def load_data(filename):
 	'''
