@@ -8,8 +8,14 @@ RANDOM_STATE = 1
 DISCR_COL = 'MonthlyIncome'
 BIN_LEN = 10000
 
-KEEP_COLS = ['zipcode', 'MonthlyIncome_discrete', 'NumberRealEstateLoansOrLines']
-TARGET_COL = ['SeriousDlqin2yrs']
+KEEP_COLS = ['school_city','school_metro','school_charter','teacher_prefix', 
+           'primary_focus_subject','primary_focus_area', 'secondary_focus_subject', 
+           'secondary_focus_area','resource_type', 'poverty_level', 'grade_level',
+           'eligible_double_your_impact_match', 'month_posted', 'year_posted']
+
+TARGET_COL = ['outcome']
+
+DATES = ['date_posted', 'datefullyfunded']
 
 path = 'data/projects_2012_2013.csv'
 
@@ -79,14 +85,14 @@ def discretize(self, colname, bin_len):
     return None
 
 
-def make_binary(self, cols):
+def make_binary(df, cols):
     '''
     Makes a categorical variable binary
     Inputs:
         cols: list of column names
     '''
 
-    df = pd.get_dummies(self.data, columns=cols)
+    df = pd.get_dummies(df, columns=cols)
 
     return df
 
@@ -121,15 +127,16 @@ def set_y(self):
     return None
 
 
-def format_df(self):
+def format_df(df):
     '''
     Transforms feature columns into dummy variables and returns
         dataframe used to build the decision tree
     '''
-    df = self.data.loc[:, self.cols + self.target]
+    df = df.loc[:, DATES + KEEP_COLS + TARGET_COL]
     df2 = df.copy()
+    rv = make_binary(df2, KEEP_COLS)
 
-    return self.make_binary(df2, keep_cols)
+    return rv
 
 
 def get_test_train(self):
