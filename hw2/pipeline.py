@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-TEST_SIZE = 0.2
+TEST_SIZE = 0.3
 RANDOM_STATE = 1
 DISCR_COL = 'MonthlyIncome'
 BIN_LEN = 10000
