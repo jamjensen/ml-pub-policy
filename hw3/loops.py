@@ -14,11 +14,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import *
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import ParameterGrid
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import random
 import matplotlib.pyplot as plt
 from scipy import optimize
 import time
 import seaborn as sns
+import pipeline
 
 
 
@@ -32,7 +35,7 @@ def define_clfs_params(grid_size):
 
     clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
         'LR': LogisticRegression(penalty='l1', C=1e5),
-        'SVM': svm.SVC(kernel='linear', probability=True, random_state=0),
+        # 'SVM': svm.SVC(kernel='linear', probability=True, random_state=0),
         'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
         'DT': DecisionTreeClassifier(),
         'KNN': KNeighborsClassifier(n_neighbors=3),
@@ -55,9 +58,9 @@ def define_clfs_params(grid_size):
     'LR': { 'penalty': ['l1'], 'C': [0.01]},
     'GB': {'n_estimators': [1], 'learning_rate' : [0.1],'subsample' : [0.5], 'max_depth': [1]},
     'DT': {'criterion': ['gini'], 'max_depth': [1],'min_samples_split': [10]},
-    'SVM' :{'C' :[0.01],'kernel':['linear']},
+    # 'SVM' :{'C' :[0.01],'kernel':['linear']},
     'KNN' :{'n_neighbors': [5],'weights': ['uniform'],'algorithm': ['auto']},
-    'BG': {'n_estimators' : [10, 20], 'max_samples' : [.25, .5]}
+    'BG': {'n_estimators' : [10], 'max_samples' : [.5]}
            }
 
     if (grid_size == 'large'):
@@ -68,34 +71,77 @@ def define_clfs_params(grid_size):
         return None
 
 
-def clf_loop(models_to_run, clfs, grid, X, y):
+
+def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
+
+    rv_lst = []
+
+    time_periods = get_time_periods(df, prediction_windows)
+
+    for period in time_periods:
+
+        train_start_date = period[0]
+        train_end_date = period[1]
+        test_start_date = period[2]
+        test_end_date = period[3]
+
+        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_start_date, test_start_date, test_end_date)
+
+        rv_row = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date)
+
+        rv_lst.extend(rv_row)
+
+
+    rv_df = pd.DataFrame(rv_lst, columns=('train_start','train_end','test_start','test_end','model_type','clf', 'parameters','baseline', 'auc-roc',
+                                            'p_at_1', 'p_at_2', 'p_at_5', 'p_at_10', 'p_at_20', 'p_at_30', 'p_at_50', 'r_at_1', 'r_at_2','r_at_5',
+                                            'r_at_10', 'r_at_20','r_at_30','r_at_50'))
+
+    return rv_df
+
+
+
+def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date):
     """Runs the loop using models_to_run, clfs, gridm and the data
     """
-    results_df =  pd.DataFrame(columns=('model_type','clf', 'parameters', 'auc-roc','p_at_5', 'p_at_10', 'p_at_20'))
+    rv = []
+
     for n in range(1, 2):
         # create training and valdation sets
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=0)
         for index,clf in enumerate([clfs[x] for x in models_to_run]):
             print(models_to_run[index])
             parameter_values = grid[models_to_run[index]]
             for p in ParameterGrid(parameter_values):
                 try:
                     clf.set_params(**p)
-                    y_pred_probs = clf.fit(X_train, y_train).predict_proba(X_test)[:,1]
-                    # you can also store the model, feature importances, and prediction scores
-                    # we're only storing the metrics for now
-                    y_pred_probs_sorted, y_test_sorted = zip(*sorted(zip(y_pred_probs, y_test), reverse=True))
-                    results_df.loc[len(results_df)] = [models_to_run[index],clf, p,
-                                                       roc_auc_score(y_test, y_pred_probs),
-                                                       precision_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
-                                                       precision_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
-                                                       precision_at_k(y_test_sorted,y_pred_probs_sorted,20.0)]
+                    fit = clf.fit(x_train, y_train.values.ravel())
+                    y_pred_probs = fit.predict_proba(x_test)[:,1]
+                    y_pred_probs_sorted, y_test_sorted = zip(*sorted(zip(y_pred_probs, y_test.values.ravel()), reverse=True))
+                    row = [train_start_date, train_end_date, test_start_date, test_end_date,
+                                models_to_run[index],clf, p,
+                                baseline(y_test),
+                               roc_auc_score(y_test, y_pred_probs),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,1.0),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,2.0),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,20.0),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
+                               precision_at_k(y_test_sorted,y_pred_probs_sorted,50.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,1.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,2.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,20.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
+                               recall_at_k(y_test_sorted,y_pred_probs_sorted,50.0)]
+                               
+                    rv.append(row)
                     # plot_precision_recall_n(y_test,y_pred_probs,clf)
                 except IndexError as e:
                     print('Error:',e)
                     continue
 
-    return results_df
+    return rv
 
 
 # a set of helper function to do machine learning evalaution
@@ -127,3 +173,56 @@ def recall_at_k(y_true, y_scores, k):
     recall_at_k = generate_binary_at_k(y_scores, k)
     recall = recall_score(y_true, recall_at_k)
     return recall
+
+
+def accuracy_at_k(y_true, y_scores, k):
+    y_scores, y_true = joint_sort_descending(np.array(y_scores), np.array(y_true))
+    preds_at_k = generate_binary_at_k(y_scores, k)
+    #print(len(preds_at_k))
+
+    pred = accuracy_score(y_true, preds_at_k)
+
+    return pred
+
+
+def f1_at_k(y_true, y_scores, k):
+    y_scores, y_true = joint_sort_descending(np.array(y_scores), np.array(y_true))
+    preds_at_k = generate_binary_at_k(y_scores, k)
+
+    f1 = f1_score(y_true, preds_at_k)
+
+    return f1
+
+def baseline(y_test):
+    base = y_test.sum()/ len(y_test)
+
+    return base
+
+
+
+def get_time_periods(df, prediction_windows):
+
+
+    train_start_date = df['date_posted'].min()
+    end_date = df['date_posted'].max()
+
+    time_periods = []
+
+    for window in prediction_windows:
+
+        train_end_date = train_start_date + relativedelta(months=+window) - relativedelta(days=+1)
+
+        while train_end_date + relativedelta(months=+window)<=end_date:
+
+            test_start_date = train_end_date + relativedelta(days=+1)
+            test_end_date = test_start_date + relativedelta(months=+window) - relativedelta(days=+1)
+            
+            # Build training and testing sets
+            time_periods.append([train_start_date, train_end_date, test_start_date, test_end_date])
+
+            # Increment time
+            train_end_date += relativedelta(months=+window)
+
+
+    return time_periods
+

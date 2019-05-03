@@ -8,12 +8,12 @@ RANDOM_STATE = 1
 DISCR_COL = 'MonthlyIncome'
 BIN_LEN = 10000
 
-KEEP_COLS = ['school_city','school_metro','school_charter','teacher_prefix', 
+FEATURES = ['school_state','school_metro','school_charter','teacher_prefix', 
            'primary_focus_subject','primary_focus_area', 'secondary_focus_subject', 
            'secondary_focus_area','resource_type', 'poverty_level', 'grade_level',
            'eligible_double_your_impact_match', 'month_posted', 'year_posted']
 
-TARGET_COL = ['outcome']
+TARGET = ['outcome']
 
 DATES = ['date_posted', 'datefullyfunded']
 
@@ -26,15 +26,8 @@ class process:
     def __init__(self, path):
 
         self.data = self.load_data(path)
-        self.cols = KEEP_COLS
-        self.target = TARGET_COL
-        self.discr_col = DISCR_COL
-        self.y = None
-        self.x = None
-        # self.x = self.set_x()
-        # self.y = self.set_y()
-        # self.df = self.format_df()
-
+        self.cols = FEATURES
+        self.target = TARGET
 
     def load_data(self, path):
         '''
@@ -67,7 +60,7 @@ def fill_continuous_null(df, cols):
     return None
 
 
-def discretize(self, colname, bin_len):
+def discretize(data, colname, bin_len):
     '''
     Discretizes a continuous variable
     Inputs:
@@ -76,8 +69,8 @@ def discretize(self, colname, bin_len):
         bin_len (int): size of bins 
     '''
     
-    lb = self.data[colname].min()
-    ub = self.data[colname].max()
+    lb = data[colname].min()
+    ub = data[colname].max()
     bins = np.linspace(lb, ub, bin_len)
 
     df[colname +'_discrete'] = df[colname].apply(lambda x: np.digitize(x, bins))
@@ -97,61 +90,50 @@ def make_binary(df, cols):
     return df
 
 
-def set_x(self):
-    '''
-    Creates predictor and target dataframes.
-    Input:
-        df (pandas df): containing predictor and target columns
-        target_col (str): name of target column (predicting)
-    Output:
-        Returns a tuple of dataframes
-    '''
-    
-    self.x = self.data.drop(self.target, axis=1)
-
-    return None
-
-
-def set_y(self):
-    '''
-    Creates predictor and target dataframes.
-    Input:
-        df (pandas df): containing predictor and target columns
-        target_col (str): name of target column (predicting)
-    Output:
-        Returns a tuple of dataframes
-    '''
-    
-    self.y = self.data.loc[:, target_col]
-
-    return None
-
 
 def format_df(df):
     '''
     Transforms feature columns into dummy variables and returns
         dataframe used to build the decision tree
     '''
-    df = df.loc[:, DATES + KEEP_COLS + TARGET_COL]
+    # df = df.loc[:, DATES + FEATURES + TARGET]
     df2 = df.copy()
-    rv = make_binary(df2, KEEP_COLS)
+    rv = make_binary(df2, FEATURES)
 
     return rv
 
 
-def get_test_train(self):
-    '''
-    Splits data using scikit test_train
-    Input:
-        x: pandas df of predictor data
-        y: pandas df of target data
-    Output:
-        x_train (df): dataframe
-        x_test (df): dataframe
-        y_train (df): dataframe
-        y_test (df): dataframe
-    '''
-    x_train, x_test, y_train, y_test = train_test_split(self.x, self.y,
-        test_size=TEST_SIZE, random_state=RANDOM_STATE)
 
-    return x_train, x_test, y_train, y_test
+def get_train_test_splits(df, train_start, train_end, test_start, test_end):
+
+    df_train = df[(df['date_posted'] >= train_start) & (df['date_posted'] <= train_end)]
+    df_test = df[(df['date_posted'] >= test_start) & (df['date_posted'] <=test_end)]
+
+    x_train = df_train[FEATURES]
+    y_train = df_train[TARGET]
+
+    x_test = df_test.loc[:,FEATURES]
+    y_test = df_test.loc[:,TARGET]
+
+    x_train['label'] = 'train'
+    x_test['label'] = 'test'
+
+    concat_df = pd.concat([x_train , x_test])
+
+    features_df = make_binary(concat_df, FEATURES)
+
+    x_train = features_df[features_df['label'] == 'train']
+    x_test = features_df[features_df['label'] == 'test']
+
+    x_train = x_train.drop('label', axis=1)
+    x_test  = x_test.drop('label', axis=1)
+
+    # x_train = make_binary(x_train, FEATURES)
+    # x_test = make_binary(x_test, FEATURES)
+
+
+    return x_train, y_train, x_test, y_test
+
+
+
+
