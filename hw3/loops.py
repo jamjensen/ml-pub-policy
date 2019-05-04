@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn import preprocessing, svm, metrics, tree, decomposition, svm
 from sklearn.model_selection import cross_validate
+from sklearn.svm import LinearSVC
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier, AdaBoostClassifier, BaggingClassifier
 from sklearn.linear_model import LogisticRegression, Perceptron, SGDClassifier, OrthogonalMatchingPursuit, RandomizedLogisticRegression
 from sklearn.neighbors.nearest_centroid import NearestCentroid
@@ -24,6 +25,10 @@ import seaborn as sns
 import pipeline
 
 
+EMPTY_DF = pd.DataFrame(columns=('train_start','train_end','test_start','test_end','model_type','clf', 'parameters','baseline', 'auc-roc',
+                                            'f1_at_5','f1_at_10','a_at_5', 'a_at_10',
+                                            'p_at_1', 'p_at_2', 'p_at_5', 'p_at_10', 'p_at_20', 'p_at_30', 'p_at_50', 'r_at_1', 'r_at_2','r_at_5',
+                                            'r_at_10', 'r_at_20','r_at_30','r_at_50'))
 
 def define_clfs_params(grid_size):
     """Define defaults for different classifiers.
@@ -35,7 +40,7 @@ def define_clfs_params(grid_size):
 
     clfs = {'RF': RandomForestClassifier(n_estimators=50, n_jobs=-1),
         'LR': LogisticRegression(penalty='l1', C=1e5),
-        # 'SVM': svm.SVC(kernel='linear', probability=True, random_state=0),
+        'SVM': LinearSVC(random_state=0),
         'GB': GradientBoostingClassifier(learning_rate=0.05, subsample=0.5, max_depth=6, n_estimators=10),
         'DT': DecisionTreeClassifier(),
         'KNN': KNeighborsClassifier(n_neighbors=3),
@@ -47,20 +52,20 @@ def define_clfs_params(grid_size):
     'LR': { 'penalty': ['l1','l2'], 'C': [0.00001,0.0001,0.001,0.01,0.1,1,10]},
     'GB': {'n_estimators': [1,10,100,1000,10000], 'learning_rate' : [0.001,0.01,0.05,0.1,0.5],'subsample' : [0.1,0.5,1.0], 'max_depth': [1,3,5,10,20,50,100]},
     'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [1,5,10,20,50,100],'min_samples_split': [2,5,10]},
-    'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10],'kernel':['linear']},
+    'SVM' :{'C' :[0.00001,0.0001,0.001,0.01,0.1,1,10]},
     'KNN' :{'n_neighbors': [1,5,10,25,50,100],'weights': ['uniform','distance'],'algorithm': ['auto','ball_tree','kd_tree']},
     'BG': {'n_estimators' : [10, 20], 'max_samples' : [.25, .5]}
            }
 
     
     test_grid = { 
-    'RF':{'n_estimators': [1], 'max_depth': [1], 'max_features': ['sqrt'],'min_samples_split': [10]},
-    'LR': { 'penalty': ['l1'], 'C': [0.01]},
-    'GB': {'n_estimators': [1], 'learning_rate' : [0.1],'subsample' : [0.5], 'max_depth': [1]},
-    'DT': {'criterion': ['gini'], 'max_depth': [1],'min_samples_split': [10]},
-    # 'SVM' :{'C' :[0.01],'kernel':['linear']},
-    'KNN' :{'n_neighbors': [5],'weights': ['uniform'],'algorithm': ['auto']},
-    'BG': {'n_estimators' : [10], 'max_samples' : [.5]}
+    'RF':{'n_estimators': [1,5,10], 'max_depth': [1,5], 'max_features': ['sqrt'],'min_samples_split': [10]},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.01, .1]},
+    'GB': {'n_estimators': [100, 50, 30], 'learning_rate' : [0.1],'subsample' : [0.5], 'max_depth': [1]},
+    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10],'min_samples_split': [2,5,10]},
+    'SVM' :{'C' :[0.01]},
+    'KNN' :{'n_neighbors': [2,5,10],'weights': ['uniform'],'algorithm': ['auto']},
+    'BG': {'n_estimators' : [2, 10, 20], 'max_samples' : [.1, .5]}
            }
 
     if (grid_size == 'large'):
@@ -74,7 +79,7 @@ def define_clfs_params(grid_size):
 
 def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
 
-    rv_lst = []
+    results_df = EMPTY_DF
 
     time_periods = get_time_periods(df, prediction_windows)
 
@@ -85,25 +90,21 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
         test_start_date = period[2]
         test_end_date = period[3]
 
-        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_start_date, test_start_date, test_end_date)
+        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date)
 
-        rv_row = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date)
+        output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date)
 
-        rv_lst.extend(rv_row)
-
-
-    rv_df = pd.DataFrame(rv_lst, columns=('train_start','train_end','test_start','test_end','model_type','clf', 'parameters','baseline', 'auc-roc',
-                                            'p_at_1', 'p_at_2', 'p_at_5', 'p_at_10', 'p_at_20', 'p_at_30', 'p_at_50', 'r_at_1', 'r_at_2','r_at_5',
-                                            'r_at_10', 'r_at_20','r_at_30','r_at_50'))
-
-    return rv_df
+        results_df = results_df.append(output_df, ignore_index=True)
 
 
+    return results_df
 
+
+# heavily influenced by function found here: https://github.com/rayidghani/magicloops/blob/master/magicloop.py and /simpleloop.py
 def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date):
     """Runs the loop using models_to_run, clfs, gridm and the data
     """
-    rv = []
+    inner_df = EMPTY_DF
 
     for n in range(1, 2):
         # create training and valdation sets
@@ -114,12 +115,19 @@ def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_
                 try:
                     clf.set_params(**p)
                     fit = clf.fit(x_train, y_train.values.ravel())
-                    y_pred_probs = fit.predict_proba(x_test)[:,1]
+                    if models_to_run[index] == 'SVM':
+                        y_pred_probs = fit.decision_function(x_test)
+                    else:
+                        y_pred_probs = fit.predict_proba(x_test)[:,1]
                     y_pred_probs_sorted, y_test_sorted = zip(*sorted(zip(y_pred_probs, y_test.values.ravel()), reverse=True))
-                    row = [train_start_date, train_end_date, test_start_date, test_end_date,
+                    inner_df.loc[len(inner_df)] = [train_start_date, train_end_date, test_start_date, test_end_date,
                                 models_to_run[index],clf, p,
                                 baseline(y_test),
                                roc_auc_score(y_test, y_pred_probs),
+                               f1_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
+                               f1_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
+                               accuracy_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
+                                accuracy_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
                                precision_at_k(y_test_sorted,y_pred_probs_sorted,1.0),
                                precision_at_k(y_test_sorted,y_pred_probs_sorted,2.0),
                                precision_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
@@ -135,16 +143,14 @@ def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,50.0)]
                                
-                    rv.append(row)
                     # plot_precision_recall_n(y_test,y_pred_probs,clf)
                 except IndexError as e:
                     print('Error:',e)
                     continue
 
-    return rv
+    return inner_df
 
 
-# a set of helper function to do machine learning evalaution
 
 def joint_sort_descending(l1, l2):
     # l1 and l2 have to be numpy arrays
@@ -194,12 +200,14 @@ def f1_at_k(y_true, y_scores, k):
     return f1
 
 def baseline(y_test):
+
     base = y_test.sum()/ len(y_test)
 
     return base
 
 
-
+# Inspiration for get_time_periods()
+# https://github.com/rayidghani/magicloops/blob/master/temporal_validate.py
 def get_time_periods(df, prediction_windows):
 
 
@@ -217,12 +225,8 @@ def get_time_periods(df, prediction_windows):
             test_start_date = train_end_date + relativedelta(days=+1)
             test_end_date = test_start_date + relativedelta(months=+window) - relativedelta(days=+1)
             
-            # Build training and testing sets
             time_periods.append([train_start_date, train_end_date, test_start_date, test_end_date])
-
-            # Increment time
             train_end_date += relativedelta(months=+window)
-
 
     return time_periods
 

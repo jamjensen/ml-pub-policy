@@ -3,14 +3,11 @@ import numpy as np
 import os
 from sklearn.model_selection import train_test_split
 
-TEST_SIZE = 0.3
-RANDOM_STATE = 1
-DISCR_COL = 'MonthlyIncome'
-BIN_LEN = 10000
 
 FEATURES = ['school_state','school_metro','school_charter','teacher_prefix', 
-           'primary_focus_subject','primary_focus_area', 'secondary_focus_subject', 
-           'secondary_focus_area','resource_type', 'poverty_level', 'grade_level',
+            'students_reached','total_price_including_optional_support',
+           'primary_focus_subject','primary_focus_area', 
+           'resource_type', 'poverty_level', 'grade_level',
            'eligible_double_your_impact_match', 'month_posted', 'year_posted']
 
 TARGET = ['outcome']
@@ -75,7 +72,7 @@ def discretize(data, colname, bin_len):
 
     df[colname +'_discrete'] = df[colname].apply(lambda x: np.digitize(x, bins))
 
-    return None
+    return df
 
 
 def make_binary(df, cols):
