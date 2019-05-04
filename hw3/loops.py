@@ -30,6 +30,7 @@ EMPTY_DF = pd.DataFrame(columns=('train_start','train_end','test_start','test_en
                                             'p_at_1', 'p_at_2', 'p_at_5', 'p_at_10', 'p_at_20', 'p_at_30', 'p_at_50', 'r_at_1', 'r_at_2','r_at_5',
                                             'r_at_10', 'r_at_20','r_at_30','r_at_50'))
 
+# following functions are heavily influenced by code found here: https://github.com/rayidghani/magicloops/blob/master/magicloop.py and /simpleloop.py
 def define_clfs_params(grid_size):
     """Define defaults for different classifiers.
     Define three types of grids:
@@ -100,11 +101,10 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
     return results_df
 
 
-# heavily influenced by function found here: https://github.com/rayidghani/magicloops/blob/master/magicloop.py and /simpleloop.py
 def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date):
     """Runs the loop using models_to_run, clfs, gridm and the data
     """
-    inner_df = EMPTY_DF
+    inner_df = EMPTY_DF.copy()
 
     for n in range(1, 2):
         # create training and valdation sets

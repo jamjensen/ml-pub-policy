@@ -10,7 +10,7 @@ FEATURES = ['school_state','school_metro','school_charter','teacher_prefix',
            'resource_type', 'poverty_level', 'grade_level',
            'eligible_double_your_impact_match', 'month_posted', 'year_posted']
 
-TARGET = ['outcome']
+TARGET = ['not_funded_in_60']
 
 DATES = ['date_posted', 'datefullyfunded']
 
