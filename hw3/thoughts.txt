@@ -1,0 +1,8 @@
+
+last posting date ends with the last outcome date
+importance of gap: 
+* what do you do today... if you're predicting 60 days from today, need last posting date to be 60 days prior
+
+metrics should be calculated on % of population and not on score thresholds
+* scores are not comparable 
+* want to calculate on percentage of people 

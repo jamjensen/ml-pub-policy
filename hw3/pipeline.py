@@ -57,7 +57,7 @@ def fill_continuous_null(df, cols):
     return None
 
 
-def discretize(data, colname, bin_len):
+def discretize(df, cols, num_bins):
     '''
     Discretizes a continuous variable
     Inputs:
@@ -66,11 +66,10 @@ def discretize(data, colname, bin_len):
         bin_len (int): size of bins 
     '''
     
-    lb = data[colname].min()
-    ub = data[colname].max()
-    bins = np.linspace(lb, ub, bin_len)
+    for col in cols:
+        df[col] = pd.qcut(df[col], num_bins)
 
-    df[colname +'_discrete'] = df[colname].apply(lambda x: np.digitize(x, bins))
+    # df[colname +'_discrete'] = df[colname].apply(lambda x: np.digitize(x, bins))
 
     return df
 
@@ -101,7 +100,7 @@ def format_df(df):
 
 
 
-def get_train_test_splits(df, train_start, train_end, test_start, test_end):
+def get_train_test_splits(df, train_start, train_end, test_start, test_end, continuous_cols):
 
     df_train = df[(df['date_posted'] >= train_start) & (df['date_posted'] <= train_end)]
     df_test = df[(df['date_posted'] >= test_start) & (df['date_posted'] <=test_end)]
@@ -111,6 +110,10 @@ def get_train_test_splits(df, train_start, train_end, test_start, test_end):
 
     x_test = df_test.loc[:,FEATURES]
     y_test = df_test.loc[:,TARGET]
+
+    for df in [x_train, x_test]:
+        fill_continuous_null(df, continuous_cols)
+        discretize(df, continuous_cols, 5)
 
     x_train['label'] = 'train'
     x_test['label'] = 'test'

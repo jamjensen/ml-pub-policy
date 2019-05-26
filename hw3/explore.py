@@ -4,6 +4,8 @@ import seaborn as sns
 import joypy
 import missingno as msno
 import pipeline
+import matplotlib.pyplot as plt
+
 
 
 COL_NAMES = ['NumberOfTimes90DaysLate', 'MonthlyIncome', 'age']
@@ -38,13 +40,21 @@ def target_loc_dist(df, target, loc):
 	return one / two
 
 
-def plot_distribution(col):
+def make_histogram(df, col, kde = True, rug = False, bins = None):
 	'''
 	Takes the column (str) of a dataframe and plots distribution of its values.
 	Continous variables. 
 	'''
 
-	return sns.distplot(col, hist=False, rug=True);
+	# Note: NaN's are exluded
+	plot_var = df[col]
+	if bins is None:
+		sns.distplot(plot_var[~plot_var.isnull()], kde = kde, rug = rug)
+	else:
+		sns.distplot(plot_var[~plot_var.isnull()], kde = kde, rug = rug, bins = bins)
+	plt.title(col + ' Histogram')
+	plt.ylabel('Frequency')
+	plt.show()
 
 
 def make_heatmap(df):

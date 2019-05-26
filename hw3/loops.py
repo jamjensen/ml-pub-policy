@@ -26,7 +26,7 @@ import pipeline
 
 
 EMPTY_DF = pd.DataFrame(columns=('train_start','train_end','test_start','test_end','model_type','clf', 'parameters','baseline', 'auc-roc',
-                                            'f1_at_5','f1_at_10','a_at_5', 'a_at_10',
+                                            'f1_at_5','f1_at_10','f1_at_20','f1_at_30','f1_at_50','a_at_5', 'a_at_10','a_at_20','a_at_30','a_at_50',
                                             'p_at_1', 'p_at_2', 'p_at_5', 'p_at_10', 'p_at_20', 'p_at_30', 'p_at_50', 'r_at_1', 'r_at_2','r_at_5',
                                             'r_at_10', 'r_at_20','r_at_30','r_at_50'))
 
@@ -78,7 +78,7 @@ def define_clfs_params(grid_size):
 
 
 
-def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
+def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, continuous_cols):
 
     results_df = EMPTY_DF
 
@@ -91,7 +91,7 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
         test_start_date = period[2]
         test_end_date = period[3]
 
-        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date)
+        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date, continuous_cols)
 
         output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date)
 
@@ -126,8 +126,14 @@ def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_
                                roc_auc_score(y_test, y_pred_probs),
                                f1_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
                                f1_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
+                               f1_at_k(y_test_sorted,y_pred_probs_sorted,20.0),
+                               f1_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
+                               f1_at_k(y_test_sorted,y_pred_probs_sorted,50.0),
                                accuracy_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
                                 accuracy_at_k(y_test_sorted,y_pred_probs_sorted,10.0),
+                                accuracy_at_k(y_test_sorted,y_pred_probs_sorted,20.0),
+                                accuracy_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
+                                accuracy_at_k(y_test_sorted,y_pred_probs_sorted,50.0),
                                precision_at_k(y_test_sorted,y_pred_probs_sorted,1.0),
                                precision_at_k(y_test_sorted,y_pred_probs_sorted,2.0),
                                precision_at_k(y_test_sorted,y_pred_probs_sorted,5.0),
@@ -205,6 +211,37 @@ def baseline(y_test):
 
     return base
 
+def plot_precision_recall_n(y_true, y_prob, model_name):
+    from sklearn.metrics import precision_recall_curve
+    y_score = y_prob
+    precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
+    precision_curve = precision_curve[:-1]
+    recall_curve = recall_curve[:-1]
+    pct_above_per_thresh = []
+    number_scored = len(y_score)
+    for value in pr_thresholds:
+        num_above_thresh = len(y_score[y_score>=value])
+        pct_above_thresh = num_above_thresh / float(number_scored)
+        pct_above_per_thresh.append(pct_above_thresh)
+    pct_above_per_thresh = np.array(pct_above_per_thresh)
+    
+    plt.clf()
+    fig, ax1 = plt.subplots()
+    ax1.plot(pct_above_per_thresh, precision_curve, 'b')
+    ax1.set_xlabel('percent of population')
+    ax1.set_ylabel('precision', color='b')
+    ax2 = ax1.twinx()
+    ax2.plot(pct_above_per_thresh, recall_curve, 'r')
+    ax2.set_ylabel('recall', color='r')
+    ax1.set_ylim([0,1])
+    ax1.set_ylim([0,1])
+    ax2.set_xlim([0,1])
+    
+    name = model_name
+    plt.title(name)
+    #plt.savefig(name)
+    plt.show()
+
 
 # Inspiration for get_time_periods()
 # https://github.com/rayidghani/magicloops/blob/master/temporal_validate.py
@@ -222,7 +259,7 @@ def get_time_periods(df, prediction_windows):
 
         while train_end_date + relativedelta(months=+window)<=end_date:
 
-            test_start_date = train_end_date + relativedelta(days=+1)
+            test_start_date = train_end_date + relativedelta(days=+60)
             test_end_date = test_start_date + relativedelta(months=+window) - relativedelta(days=+1)
             
             time_periods.append([train_start_date, train_end_date, test_start_date, test_end_date])
