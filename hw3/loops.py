@@ -60,7 +60,7 @@ def define_clfs_params(grid_size):
 
     
     test_grid = { 
-    'RF':{'n_estimators': [1,5,10], 'max_depth': [1,5], 'max_features': ['sqrt'],'min_samples_split': [10]},
+    'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [5,10], 'max_features': ['sqrt','log2'],'min_samples_split': [10]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.01, .1]},
     'GB': {'n_estimators': [100, 50, 30], 'learning_rate' : [0.1],'subsample' : [0.5], 'max_depth': [1]},
     'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10],'min_samples_split': [2,5,10]},
@@ -234,7 +234,7 @@ def plot_precision_recall_n(y_true, y_prob, model_name):
     ax2.plot(pct_above_per_thresh, recall_curve, 'r')
     ax2.set_ylabel('recall', color='r')
     ax1.set_ylim([0,1])
-    ax1.set_ylim([0,1])
+    ax2.set_ylim([0,1])
     ax2.set_xlim([0,1])
     
     name = model_name
