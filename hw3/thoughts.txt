@@ -6,3 +6,28 @@ importance of gap:
 metrics should be calculated on % of population and not on score thresholds
 * scores are not comparable 
 * want to calculate on percentage of people 
+
+
+Model that has higher precision, will also have higher recall. 
+
+You don't have to discretize by default. 
+
+
+
+
+1. Better way than hand picking categorical variables (lines 7-12 in pipeline) when creating dummy variables. 
+	1. In `get_train_splits` I discretize and make dummies out of every column? Is this the right way to go about it? Is there are better way? Do I have to make dummies out of everything, or should I leave as continuous instead of discretizing? 
+
+2. Print AUC-ROC curve for every model, or just the top model? 
+And if you double the resources, you can increase the lift. 
+
+3. Is there a better way to initialize the data frame ? 
+
+If you build a model on six months and test every day —> 
+	* would inform us of how does model perform as it gets old 
+
+Top Models: DT, LR, RF,
+
+Keep as continuous to start bc discretize throws  away information
+	* RG: “keep age as continuous, then notices issue with 12-18, makes discretized variable <12, 12-18, >18
+	* what is the information you lose through discretization? 

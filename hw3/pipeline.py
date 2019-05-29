@@ -117,6 +117,8 @@ def get_train_test_splits(df, train_start, train_end, test_start, test_end, cont
         fill_continuous_null(df, continuous_cols)
         # discretize(df, continuous_cols, 5)
 
+    str_columns = [column for column in df.columns if (df[column].dtype=='O') and (len(df[column].unique())<=51)]
+
     x_train['label'] = 'train'
     x_test['label'] = 'test'
 
