@@ -93,7 +93,7 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, output_type
 
         x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date)
 
-        output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date)
+        output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date, output_type, figname)
 
         results_df = results_df.append(output_df, ignore_index=True)
 
