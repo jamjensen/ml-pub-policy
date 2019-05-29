@@ -10,6 +10,8 @@ FEATURES = ['school_state','school_metro','school_charter','teacher_prefix',
            'resource_type', 'poverty_level', 'grade_level',
            'eligible_double_your_impact_match', 'month_posted', 'year_posted']
 
+CONTINUOUS = ['total_price_including_optional_support', 'students_reached']
+
 TARGET = ['not_funded_in_60']
 
 DATES = ['date_posted', 'datefullyfunded']
@@ -113,7 +115,7 @@ def get_train_test_splits(df, train_start, train_end, test_start, test_end, cont
 
     for df in [x_train, x_test]:
         fill_continuous_null(df, continuous_cols)
-        discretize(df, continuous_cols, 5)
+        # discretize(df, continuous_cols, 5)
 
     x_train['label'] = 'train'
     x_test['label'] = 'test'
