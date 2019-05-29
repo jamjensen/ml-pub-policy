@@ -4,12 +4,6 @@ import os
 from sklearn.model_selection import train_test_split
 
 
-FEATURES = ['school_state','school_metro','school_charter','teacher_prefix', 
-            'students_reached','total_price_including_optional_support',
-           'primary_focus_subject','primary_focus_area', 
-           'resource_type', 'poverty_level', 'grade_level',
-           'eligible_double_your_impact_match', 'month_posted', 'year_posted']
-
 CONTINUOUS = ['total_price_including_optional_support', 'students_reached']
 
 TARGET = 'not_funded_in_60'
@@ -25,7 +19,6 @@ class process:
     def __init__(self, path):
 
         self.data = self.load_data(path)
-        self.cols = FEATURES
         self.target = TARGET
 
     def load_data(self, path):

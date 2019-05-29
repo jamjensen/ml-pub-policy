@@ -78,7 +78,7 @@ def define_clfs_params(grid_size):
 
 
 
-def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, output_type, figname):
+def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, output_type):
 
     results_df = EMPTY_DF
 
@@ -93,7 +93,7 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, output_type
 
         x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date)
 
-        output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date, output_type, figname)
+        output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date, output_type)
 
         results_df = results_df.append(output_df, ignore_index=True)
 
@@ -101,7 +101,7 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, output_type
     return results_df
 
 
-def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date, output_type, figname):
+def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date, output_type):
     """Runs the loop using models_to_run, clfs, gridm and the data
     """
     inner_df = EMPTY_DF.copy()
@@ -149,7 +149,7 @@ def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,50.0)]
                                
-                    plot_precision_recall_n(y_test,y_pred_probs,clf)
+                    plot_precision_recall_n(y_test,y_pred_probs,clf, output_type, p)
                 except IndexError as e:
                     print('Error:',e)
                     continue
@@ -211,7 +211,7 @@ def baseline(y_test):
 
     return base
 
-def plot_precision_recall_n(y_true, y_prob, model_name, output_type, figname):
+def plot_precision_recall_n(y_true, y_prob, model, output_type, p):
     from sklearn.metrics import precision_recall_curve
     y_score = y_prob
     precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
@@ -237,11 +237,11 @@ def plot_precision_recall_n(y_true, y_prob, model_name, output_type, figname):
     ax2.set_ylim([0,1])
     ax2.set_xlim([0,1])
     
-    name = model_name
+    name = str(model).split('(')[0] + str(p)
     plt.title(name)
 
     if (output_type == 'save'):
-        plt.savefig(figname)
+        plt.savefig('Plots/' + name +'.png')
     elif (output_type == 'show'):
         plt.show()
     else:
