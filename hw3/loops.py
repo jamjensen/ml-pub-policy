@@ -59,11 +59,11 @@ def define_clfs_params(grid_size):
            }
 
     
-    test_grid = { 
-    'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [5,10], 'max_features': ['sqrt','log2'],'min_samples_split': [10]},
-    'LR': { 'penalty': ['l1','l2'], 'C': [0.01, .1]},
-    'GB': {'n_estimators': [100, 50, 30], 'learning_rate' : [0.1],'subsample' : [0.5], 'max_depth': [1]},
-    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10],'min_samples_split': [2,5,10]},
+    small_grid = { 
+    'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [5,10], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10]},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.001, 0.01, .1]},
+    'GB': {'n_estimators': [1,10,100], 'learning_rate' : [0.001, 0.1, 0.5], 'subsample' : [0.1, 0.5], 'max_depth': [5, 50]},
+    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10, 20],'min_samples_split': [2,5,10]},
     'SVM' :{'C' :[0.01]},
     'KNN' :{'n_neighbors': [2,5,10],'weights': ['uniform'],'algorithm': ['auto']},
     'BG': {'n_estimators' : [2, 10, 20], 'max_samples' : [.1, .5]}
@@ -250,7 +250,13 @@ def plot_precision_recall_n(y_true, y_prob, model, output_type, p):
 # Inspiration for get_time_periods()
 # https://github.com/rayidghani/magicloops/blob/master/temporal_validate.py
 def get_time_periods(df, prediction_windows):
-
+    '''
+    Given a dataframe with a relevant date column and a list of integers, representing
+    the window in which training and testing datasets should occur, this function returns
+    a list of time periods. Within each time period is the start and end date for the
+    testing and datasets. The output of this function is used to create the training
+    and testing datasets.
+    '''
 
     train_start_date = df['date_posted'].min()
     end_date = df['date_posted'].max()
