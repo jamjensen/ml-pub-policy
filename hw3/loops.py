@@ -62,7 +62,7 @@ def define_clfs_params(grid_size):
     small_grid = { 
     'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [5,10], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.001, 0.01, .1]},
-    'GB': {'n_estimators': [1,10,100], 'learning_rate' : [0.001, 0.1, 0.5], 'subsample' : [0.1, 0.5], 'max_depth': [5, 50]},
+    'GB': {'n_estimators': [1,10,100], 'learning_rate' : [.01, 0.1], 'subsample' : [0.1, 0.5], 'max_depth': [5, 50]},
     'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10, 20],'min_samples_split': [2,5,10]},
     'SVM' :{'C' :[0.01]},
     'KNN' :{'n_neighbors': [2,5,10],'weights': ['uniform'],'algorithm': ['auto']},
@@ -71,8 +71,8 @@ def define_clfs_params(grid_size):
 
     if (grid_size == 'large'):
         return clfs, large_grid
-    elif (grid_size == 'test'):
-        return clfs, test_grid
+    elif (grid_size == 'small'):
+        return clfs, small_grid
     else:
         return None
 

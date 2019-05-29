@@ -1,16 +1,12 @@
 import pandas as pd
 import numpy as np
 import seaborn as sns
-# import joypy
-# import missingno as msno
+import joypy
+import missingno as msno
 import pipeline
 import matplotlib.pyplot as plt
 
 
-
-COL_NAMES = ['NumberOfTimes90DaysLate', 'MonthlyIncome', 'age']
-LOC = 'zipcode'
-TARGET = 'SeriousDlqin2yrs'
 
 
 def summarize(df, cols):
