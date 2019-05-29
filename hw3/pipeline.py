@@ -48,7 +48,7 @@ class process:
 def fill_continuous_null(df, cols):
     '''
     Fills null columns in a dataframe in place
-    Inputs:
+    Inputs:str_columns
         cols: list of column names corresponding to continuous variables
             with null values
     '''
@@ -102,38 +102,33 @@ def format_df(df):
 
 
 
+    # ### Make Target Column
+    # df['diff'] = (df['datefullyfunded'] - df['date_posted']).dt.days
+    # df['not_funded_in_60'] = np.where(df['diff'] > 60, 1, 0)
+
+
+
 def get_train_test_splits(df, train_start, train_end, test_start, test_end, continuous_cols):
 
-    df_train = df[(df['date_posted'] >= train_start) & (df['date_posted'] <= train_end)]
-    df_test = df[(df['date_posted'] >= test_start) & (df['date_posted'] <=test_end)]
-
-    x_train = df_train[FEATURES]
-    y_train = df_train[TARGET]
-
-    x_test = df_test.loc[:,FEATURES]
-    y_test = df_test.loc[:,TARGET]
-
-    for df in [x_train, x_test]:
-        fill_continuous_null(df, continuous_cols)
-        # discretize(df, continuous_cols, 5)
 
     str_columns = [column for column in df.columns if (df[column].dtype=='O') and (len(df[column].unique())<=51)]
 
-    x_train['label'] = 'train'
-    x_test['label'] = 'test'
+    features_df = pd.get_dummies(df, columns=str_columns)
 
-    concat_df = pd.concat([x_train , x_test])
+    for col in CONTINUOUS:
+        features_df[col] = pd.qcut(df[col], 5)
 
-    features_df = make_binary(concat_df, FEATURES)
+    features_df['date_posted'] = df['date_posted']
 
-    x_train = features_df[features_df['label'] == 'train']
-    x_test = features_df[features_df['label'] == 'test']
+    train_filter = (features_df['date_posted'] >= train_start) & (features_df['date_posted'] <= train_end)
+    test_filter = (features_df['date_posted'] >= test_start) & (features_df['date_posted'] <=test_end)
 
-    x_train = x_train.drop('label', axis=1)
-    x_test  = x_test.drop('label', axis=1)
+    train_x, train_y = features_df[train_filter], df.TARGET[train_filter]
+    test_x, test_y = features_df[test_filter], df.TARGET[test_filter]
 
-    # x_train = make_binary(x_train, FEATURES)
-    # x_test = make_binary(x_test, FEATURES)
+    
+    for df in [train_x, train_y]:
+        fill_continuous_null(df, continuous_cols)
 
 
     return x_train, y_train, x_test, y_test
