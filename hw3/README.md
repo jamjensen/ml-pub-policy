@@ -12,3 +12,7 @@ The dataset used for this exercise is a modified version of the [Kaggle DonorsCh
 ## Usage
 
 The Jupyter Notebook, titled hw3-notebook, walks through the process of loading the data, exploring the variables, creating the features, selecting the models to run, and finally runnning the models. The notebook calls pipeline.py, which handles data loading, processing, feature generation, and creation of test/train datasets. It also calls loops.py, which takes the length of each time period, and passes training and testing datasets through a given list of models. The run_time_loop() function returns a table with results across train test splits over time and performance metrics (baseline, precision and recall at different thresholds 1%, 2%, 5%, 10%, 20%, 30%, 50% and AUC_ROC). 
+
+## Plots
+
+The auc-roc curves for every model can be found in the Plots folder.
