@@ -12,7 +12,7 @@ FEATURES = ['school_state','school_metro','school_charter','teacher_prefix',
 
 CONTINUOUS = ['total_price_including_optional_support', 'students_reached']
 
-TARGET = ['not_funded_in_60']
+TARGET = 'not_funded_in_60'
 
 DATES = ['date_posted', 'datefullyfunded']
 
@@ -108,30 +108,31 @@ def format_df(df):
 
 
 
-def get_train_test_splits(df, train_start, train_end, test_start, test_end, continuous_cols):
+def get_train_test_splits(df, train_start, train_end, test_start, test_end):
 
 
     str_columns = [column for column in df.columns if (df[column].dtype=='O') and (len(df[column].unique())<=51)]
 
-    features_df = pd.get_dummies(df, columns=str_columns)
+    features_df = pd.get_dummies(df[str_columns], dummy_na=True, columns=str_columns)
 
     for col in CONTINUOUS:
-        features_df[col] = pd.qcut(df[col], 5)
+        features_df[col] = df[col]
 
-    features_df['date_posted'] = df['date_posted']
+    # for col in CONTINUOUS:
+    #     features_df[col] = pd.qcut(df[col], 5)
 
-    train_filter = (features_df['date_posted'] >= train_start) & (features_df['date_posted'] <= train_end)
-    test_filter = (features_df['date_posted'] >= test_start) & (features_df['date_posted'] <=test_end)
+    train_filter = (df['date_posted'] >= train_start) & (df['date_posted'] <= train_end)
+    test_filter = (df['date_posted'] >= test_start) & (df['date_posted'] <=test_end)
 
-    train_x, train_y = features_df[train_filter], df.TARGET[train_filter]
-    test_x, test_y = features_df[test_filter], df.TARGET[test_filter]
+    train_x, train_y = features_df[train_filter], df[train_filter][TARGET]
+    test_x, test_y = features_df[test_filter], df[test_filter][TARGET]
 
     
-    for df in [train_x, train_y]:
-        fill_continuous_null(df, continuous_cols)
+    for dframe in [train_x, test_x]:
+        fill_continuous_null(dframe, CONTINUOUS)
 
 
-    return x_train, y_train, x_test, y_test
+    return train_x, train_y, test_x, test_y
 
 
 

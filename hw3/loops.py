@@ -78,7 +78,7 @@ def define_clfs_params(grid_size):
 
 
 
-def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, continuous_cols):
+def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
 
     results_df = EMPTY_DF
 
@@ -91,7 +91,7 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, continuous_
         test_start_date = period[2]
         test_end_date = period[3]
 
-        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date, continuous_cols)
+        x_train, y_train, x_test, y_test = pipeline.get_train_test_splits(df, train_start_date, train_end_date, test_start_date, test_end_date)
 
         output_df = clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date)
 
