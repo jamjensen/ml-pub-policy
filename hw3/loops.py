@@ -78,7 +78,7 @@ def define_clfs_params(grid_size):
 
 
 
-def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
+def run_time_loop(df, models_to_run, clfs, grid, prediction_windows, output_type, figname):
 
     results_df = EMPTY_DF
 
@@ -101,7 +101,7 @@ def run_time_loop(df, models_to_run, clfs, grid, prediction_windows):
     return results_df
 
 
-def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date):
+def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_start_date, train_end_date, test_start_date, test_end_date, output_type, figname):
     """Runs the loop using models_to_run, clfs, gridm and the data
     """
     inner_df = EMPTY_DF.copy()
@@ -149,7 +149,7 @@ def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,50.0)]
                                
-                    # plot_precision_recall_n(y_test,y_pred_probs,clf)
+                    plot_precision_recall_n(y_test,y_pred_probs,clf)
                 except IndexError as e:
                     print('Error:',e)
                     continue
@@ -211,7 +211,7 @@ def baseline(y_test):
 
     return base
 
-def plot_precision_recall_n(y_true, y_prob, model_name):
+def plot_precision_recall_n(y_true, y_prob, model_name, output_type, figname):
     from sklearn.metrics import precision_recall_curve
     y_score = y_prob
     precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
@@ -239,9 +239,13 @@ def plot_precision_recall_n(y_true, y_prob, model_name):
     
     name = model_name
     plt.title(name)
-    #plt.savefig(name)
-    plt.show()
 
+    if (output_type == 'save'):
+        plt.savefig(figname)
+    elif (output_type == 'show'):
+        plt.show()
+    else:
+        plt.show()
 
 # Inspiration for get_time_periods()
 # https://github.com/rayidghani/magicloops/blob/master/temporal_validate.py
