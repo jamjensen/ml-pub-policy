@@ -15,4 +15,4 @@ The Jupyter Notebook, titled hw3-notebook, walks through the process of loading 
 
 ## Plots
 
-The auc-roc curves for every model can be found in the Plots folder.
+The precision recall curves for every model can be found in the Plots folder.
