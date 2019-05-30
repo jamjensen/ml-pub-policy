@@ -70,12 +70,6 @@ def discretize(df, cols, num_bins):
 
 
 
-    # ### Make Target Column
-    # df['diff'] = (df['datefullyfunded'] - df['date_posted']).dt.days
-    # df['not_funded_in_60'] = np.where(df['diff'] > 60, 1, 0)
-
-
-
 def get_train_test_splits(df, train_start, train_end, test_start, test_end):
     '''
     Given start and end dates for both training and testing datasets, this function identifies
