@@ -1,6 +1,6 @@
 
 #ignore plot folder 
 
-Plots/
+# Plots/
 
-.png
+# .png
