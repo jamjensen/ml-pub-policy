@@ -63,7 +63,7 @@ def define_clfs_params(grid_size):
     'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [5,10], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10]},
     'LR': { 'penalty': ['l1','l2'], 'C': [0.001, 0.01, .1]},
     'GB': {'n_estimators': [1,10,100], 'learning_rate' : [.01, 0.1], 'subsample' : [0.1, 0.5], 'max_depth': [5, 50]},
-    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10, 20],'min_samples_split': [2,5,10]},
+    'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10, 20],'min_samples_split': [5,10]},
     'SVM' :{'C' :[0.01]},
     'KNN' :{'n_neighbors': [2,5,10],'weights': ['uniform'],'algorithm': ['auto']},
     'BG': {'n_estimators' : [2, 10, 20], 'max_samples' : [.1, .5]}
@@ -252,28 +252,33 @@ def plot_precision_recall_n(y_true, y_prob, model, output_type, p):
 def get_time_periods(df, prediction_windows):
     '''
     Given a dataframe with a relevant date column and a list of integers, representing
-    the window in which training and testing datasets should occur, this function returns
+    the window in which testing datasets should occur, this function returns
     a list of time periods. Within each time period is the start and end date for the
     testing and datasets. The output of this function is used to create the training
-    and testing datasets.
+    and testing datasets. In order to predict whether or not a project will be funded in
+    60 days, we need to have a gap of 60 days between end of training set and the start
+    of the testing set. 
     '''
+    # test_size =
 
     train_start_date = df['date_posted'].min()
     end_date = df['date_posted'].max()
+    # end_date = end_date - relativedelta(days=+60)
 
     time_periods = []
 
     for window in prediction_windows:
 
-        train_end_date = train_start_date + relativedelta(months=+window) - relativedelta(days=+1)
+        train_end_date = train_start_date + relativedelta(months=+window) - relativedelta(days=60)
 
         while train_end_date + relativedelta(months=+window)<=end_date:
 
             test_start_date = train_end_date + relativedelta(days=+60)
-            test_end_date = test_start_date + relativedelta(months=+window) - relativedelta(days=+1)
+            test_end_date = test_start_date + relativedelta(months=+window) - relativedelta(days=+60)
             
             time_periods.append([train_start_date, train_end_date, test_start_date, test_end_date])
-            train_end_date += relativedelta(months=+window)
+            train_end_date += relativedelta(months=+window) 
+
 
     return time_periods
 
