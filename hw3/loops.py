@@ -61,8 +61,8 @@ def define_clfs_params(grid_size):
     
     small_grid = { 
     'RF':{'n_estimators': [1,10,100,1000], 'max_depth': [5,10], 'max_features': ['sqrt','log2'],'min_samples_split': [5,10]},
-    'LR': { 'penalty': ['l1','l2'], 'C': [0.001, 0.01, .1]},
-    'GB': {'n_estimators': [1,10,100], 'learning_rate' : [.01, 0.1], 'subsample' : [0.1, 0.5], 'max_depth': [5, 50]},
+    'LR': { 'penalty': ['l1','l2'], 'C': [0.01, .1, 1]},
+    'GB': {'n_estimators': [1,10,100], 'learning_rate' : [.01, 0.1], 'subsample' : [0.1, 0.5], 'max_depth': [5, 10]},
     'DT': {'criterion': ['gini', 'entropy'], 'max_depth': [5, 10, 20],'min_samples_split': [5,10]},
     'SVM' :{'C' :[0.01]},
     'KNN' :{'n_neighbors': [2,5,10],'weights': ['uniform'],'algorithm': ['auto']},
@@ -149,7 +149,7 @@ def clf_loop(models_to_run, clfs, grid, x_train, x_test, y_train, y_test, train_
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,30.0),
                                recall_at_k(y_test_sorted,y_pred_probs_sorted,50.0)]
                                
-                    plot_precision_recall_n(y_test,y_pred_probs,clf, output_type, p)
+                    plot_precision_recall_n(y_test,y_pred_probs,clf, output_type, p, train_end_date)
                 except IndexError as e:
                     print('Error:',e)
                     continue
@@ -211,7 +211,7 @@ def baseline(y_test):
 
     return base
 
-def plot_precision_recall_n(y_true, y_prob, model, output_type, p):
+def plot_precision_recall_n(y_true, y_prob, model, output_type, p, train_end_date):
     from sklearn.metrics import precision_recall_curve
     y_score = y_prob
     precision_curve, recall_curve, pr_thresholds = precision_recall_curve(y_true, y_score)
@@ -237,11 +237,11 @@ def plot_precision_recall_n(y_true, y_prob, model, output_type, p):
     ax2.set_ylim([0,1])
     ax2.set_xlim([0,1])
     
-    name = str(model).split('(')[0] + str(p)
+    name = str(model).split('(')[0] + str(p) + str(train_end_date)
     plt.title(name)
 
     if (output_type == 'save'):
-        plt.savefig('Plots/' + name +'.png')
+        plt.savefig('Plots2/' + name +'.png')
     elif (output_type == 'show'):
         plt.show()
     else:
